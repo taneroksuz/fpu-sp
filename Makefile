@@ -14,9 +14,9 @@ export TEST ?= all# f32_mulAdd, f32_add, f32_sub, f32_mul, f32_div, f32_sqrt,
 export ROUND ?= rne# rne, rtz, rdn, rup, rmm
 
 generate:
-	tests/generate_test_cases.sh
+	tests/generate.sh
 
-simulation:
+simulate:
 	@if [ ${LANGUAGE} = "verilog" ] && [ ${DESIGN} = "fpu" ]; \
 	then \
 		sim/test_fpu_verilog.sh; \
