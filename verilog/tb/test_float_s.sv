@@ -37,6 +37,9 @@ module test_float_s
 		logic [4:0] flags_diff;
 		logic [0:0] ready_calc;
 		logic [0:0] terminate;
+		logic [0:0] load;
+		integer i;
+		integer j;
 	} fp_result;
 
 	fp_result init_fp_res = '{
@@ -57,7 +60,10 @@ module test_float_s
 		flags_calc : 0,
 		flags_diff : 0,
 		ready_calc : 0,
-		terminate : 0
+		terminate : 0,
+		load : 0,
+		i : 0,
+		j : 0
 	};
 
 	fp_result v;
@@ -72,32 +78,21 @@ module test_float_s
 
 	string filename;
 
-	logic load;
-
-	integer i;
-	integer j;
-
 	always_comb begin
 
 		@(posedge clock);
 
-		if (reset == 0) begin
-			load = 0;
-			i = 0;
-			j = 0;
-		end
+		v = r;
 
-		if (load == 0) begin
-			filename = {operation[i],"_",mode[j],".hex"};
+		if (v.load == 0) begin
+			filename = {operation[v.i],"_",mode[v.j],".hex"};
 			data_file = $fopen(filename, "r");
 			if (data_file == 0) begin
 				$display({filename," is not available!"});
 				$finish;
 			end
-			load = 1;
+			v.load = 1;
 		end
-
-		v = r;
 
 		case(r.state)
 			TEST0 : begin
@@ -105,8 +100,10 @@ module test_float_s
 					v.state = TEST0;
 					v.enable = 0;
 				end else begin
-					v.state = TEST1;
-					v.enable = 1;
+					if ($feof(data_file) == 0) begin
+						v.state = TEST1;
+						v.enable = 1;
+					end
 				end
 			end
 			TEST1 : begin
@@ -128,26 +125,35 @@ module test_float_s
 		case(r.state)
 			TEST0 : begin
 				if ($feof(data_file)) begin
-					v.enable = 1;
+					v.enable = 0;
 					v.terminate = 1;
 					dataread = '{default:0};
 				end else begin
 					v.enable = 1;
 					v.terminate = 0;
-					scan_file = $fscanf(data_file,"%h %h %h %h\n", dataread[0], dataread[1], dataread[2], dataread[3]);
+					if (operation[v.i] == "f32_div") begin
+						scan_file = $fscanf(data_file,"%h %h %h %h\n", dataread[0], dataread[1], dataread[2], dataread[3]);
+					end else begin
+						scan_file = $fscanf(data_file,"%h %h %h\n", dataread[0], dataread[1], dataread[2]);
+					end
 				end
 				
 				if (v.terminate == 1) begin
 					$write("%c[1;34m",8'h1B);
-					$display({operation[i]," ",mode[j]});
+					$display({operation[v.i]," ",mode[v.j]});
 					$write("%c[0m",8'h1B);
 					$write("%c[1;32m",8'h1B);
 					$display("TEST SUCCEEDED");
 					$write("%c[0m",8'h1B);
-					$finish;
+					if (v.j == 4 && v.i == 1) begin
+						$finish;
+					end
+					v.i = v.j == 4 ? (v.i == 1 ? 0 : v.i + 1) : v.i;
+					v.j = v.j == 4 ? 0 : v.j + 1;
+					v.load = 0;
 				end
 
-				if (operation[i] == "f32_div") begin
+				if (operation[v.i] == "f32_div") begin
 					v.data1 = dataread[0];
 					v.data2 = dataread[1];
 					v.data3 = 0;
@@ -162,13 +168,13 @@ module test_float_s
 				end
 
 				v.fmt = 0;
-				v.rm = rm[j];
+				v.rm = rm[v.j];
 				v.op.fmadd = 0;
 				v.op.fadd = 0;
 				v.op.fsub = 0;
 				v.op.fmul = 0;
-				v.op.fdiv = operation[i] == "f32_div" ? 1 : 0;
-				v.op.fsqrt = operation[i] == "f32_sqrt" ? 1 : 0;
+				v.op.fdiv = operation[v.i] == "f32_div" ? 1 : 0;
+				v.op.fsqrt = operation[v.i] == "f32_sqrt" ? 1 : 0;
 				v.op.fcmp = 0;
 				v.op.fcvt_i2f = 0;
 				v.op.fcvt_f2i = 0;
@@ -205,7 +211,7 @@ module test_float_s
 				if (v.ready_calc == 1) begin
 					if ((v.result_diff != 0) || (v.flags_diff != 0)) begin
 						$write("%c[1;34m",8'h1B);
-						$display({operation[i]," ",mode[j]});
+						$display({operation[v.i]," ",mode[v.j]});
 						$write("%c[0m",8'h1B);
 						$write("%c[1;31m",8'h1B);
 						$display("TEST FAILED");

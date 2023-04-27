@@ -31,6 +31,9 @@ module test_float
 		logic [4:0] flags_calc;
 		logic [4:0] flags_diff;
 		logic [0:0] terminate;
+		logic [0:0] load;
+		integer i;
+		integer j;
 	} fp_result;
 
 	fp_result init_fp_res = '{
@@ -49,7 +52,10 @@ module test_float
 		flags_orig : 0,
 		flags_calc : 0,
 		flags_diff : 0,
-		terminate : 0
+		terminate : 0,
+		load : 0,
+		i : 0,
+		j : 0
 	};
 
 	fp_result v;
@@ -70,34 +76,23 @@ module test_float
 
 	string filename;
 
-	logic load;
-
-	integer i;
-	integer j;
-
 	always_comb begin
 
 		@(posedge clock);
 
-		if (reset == 0) begin
-			load = 0;
-			i = 0;
-			j = 0;
-		end
+		v = r;
 
-		if (round[i] == 0) begin
+		if (round[v.i] == 0) begin
 
-			if (load == 0) begin
-				filename = {operation[i],".hex"};
+			if (v.load == 0) begin
+				filename = {operation[v.i],".hex"};
 				data_file = $fopen(filename, "r");
 				if (data_file == 0) begin
 					$display({filename," is not available!"});
 					$finish;
 				end
-				load = 1;
+				v.load = 1;
 			end
-
-			v = init_fp_res;
 
 			if ($feof(data_file)) begin
 				v.enable = 1;
@@ -115,17 +110,17 @@ module test_float
 			v.result = dataread[2];
 			v.flags = dataread[3][4:0];
 			v.fmt = 0;
-			v.rm = rm[i];
+			v.rm = rm[v.i];
 			v.op.fmadd = 0;
 			v.op.fadd = 0;
 			v.op.fsub = 0;
 			v.op.fmul = 0;
 			v.op.fdiv = 0;
 			v.op.fsqrt = 0;
-			v.op.fcmp = cmp[i];
-			v.op.fcvt_i2f = i2f[i];
-			v.op.fcvt_f2i = f2i[i];
-			v.op.fcvt_op = op[i];
+			v.op.fcmp = cmp[v.i];
+			v.op.fcvt_i2f = i2f[v.i];
+			v.op.fcvt_f2i = f2i[v.i];
+			v.op.fcvt_op = op[v.i];
 
 			if (reset == 0) begin
 				v.op = init_fp_operation;
@@ -155,15 +150,16 @@ module test_float
 
 			if (v.terminate == 1) begin
 				$write("%c[1;34m",8'h1B);
-				$display(operation[i]);
+				$display(operation[v.i]);
 				$write("%c[0m",8'h1B);
 				$write("%c[1;32m",8'h1B);
 				$display("TEST SUCCEEDED");
 				$write("%c[0m",8'h1B);
-				$finish;
+				v.i = v.i + 1;
+				v.load = 0;
 			end else if ((v.result_diff != 0) || (v.flags_diff != 0)) begin
 				$write("%c[1;34m",8'h1B);
-				$display(operation[i]);
+				$display(operation[v.i]);
 				$write("%c[0m",8'h1B);
 				$write("%c[1;31m",8'h1B);
 				$display("TEST FAILED");
@@ -180,21 +176,17 @@ module test_float
 				$finish;
 			end
 
-			rin = v;
-
 		end else begin
 
-			if (load == 0) begin
-				filename = {operation[i],"_",mode[j],".hex"};
+			if (v.load == 0) begin
+				filename = {operation[v.i],"_",mode[v.j],".hex"};
 				data_file = $fopen(filename, "r");
 				if (data_file == 0) begin
 					$display({filename," is not available!"});
 					$finish;
 				end
-				load = 1;
+				v.load = 1;
 			end
-
-			v = init_fp_res;
 
 			if ($feof(data_file)) begin
 				v.enable = 1;
@@ -212,17 +204,17 @@ module test_float
 			v.result = dataread[1];
 			v.flags = dataread[2][4:0];
 			v.fmt = 0;
-			v.rm = rnd[j];
+			v.rm = rnd[v.j];
 			v.op.fmadd = 0;
 			v.op.fadd = 0;
 			v.op.fsub = 0;
 			v.op.fmul = 0;
 			v.op.fdiv = 0;
 			v.op.fsqrt = 0;
-			v.op.fcmp = cmp[i];
-			v.op.fcvt_i2f = i2f[i];
-			v.op.fcvt_f2i = f2i[i];
-			v.op.fcvt_op = op[i];
+			v.op.fcmp = cmp[v.i];
+			v.op.fcvt_i2f = i2f[v.i];
+			v.op.fcvt_f2i = f2i[v.i];
+			v.op.fcvt_op = op[v.i];
 
 			if (reset == 0) begin
 				v.op = init_fp_operation;
@@ -252,15 +244,20 @@ module test_float
 
 			if (v.terminate == 1) begin
 				$write("%c[1;34m",8'h1B);
-				$display({operation[i]," ",mode[j]});
+				$display({operation[v.i]," ",mode[v.j]});
 				$write("%c[0m",8'h1B);
 				$write("%c[1;32m",8'h1B);
 				$display("TEST SUCCEEDED");
 				$write("%c[0m",8'h1B);
-				$finish;
+				if (v.j == 4 && v.i == 6) begin
+					$finish;
+				end
+				v.i = v.j == 4 ? (v.i == 6 ? 0 : v.i + 1) : v.i;
+				v.j = v.j == 4 ? 0 : v.j + 1;
+				v.load = 0;
 			end else if ((v.result_diff != 0) || (v.flags_diff != 0)) begin
 				$write("%c[1;34m",8'h1B);
-				$display({operation[i]," ",mode[j]});
+				$display({operation[v.i]," ",mode[v.j]});
 				$write("%c[0m",8'h1B);
 				$write("%c[1;31m",8'h1B);
 				$display("TEST FAILED");
@@ -277,9 +274,10 @@ module test_float
 				$finish;
 			end
 
-			rin = v;
-
 		end
+
+		rin = v;
+
 	end
 
 	always_ff @(posedge clock) begin
