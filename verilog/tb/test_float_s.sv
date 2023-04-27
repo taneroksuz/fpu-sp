@@ -68,9 +68,35 @@ module test_float_s
 
 	string operation [0:1] = '{"f32_div","f32_sqrt"};
 	string mode [0:4] = '{"rne","rtz","rdn","rup","rmm"};
+	logic [2:0] rm [0:4] = '{0,1,2,3,4};
+
+	string filename;
+
+	logic load;
+
+	integer i;
+	integer j;
 
 	always_comb begin
+
 		@(posedge clock);
+
+		if (reset == 0) begin
+			load = 0;
+			i = 0;
+			j = 0;
+		end
+
+		if (load == 0) begin
+			filename = {operation[i],"_",mode[j],".hex"};
+			data_file = $fopen(filename, "r");
+			if (data_file == 0) begin
+				$display({filename," is not available!"});
+				$finish;
+			end
+			load = 1;
+		end
+
 		v = r;
 
 		case(r.state)
@@ -78,11 +104,6 @@ module test_float_s
 				if (reset == 0) begin
 					v.state = TEST0;
 					v.enable = 0;
-					data_file = $fopen("f32_sqrt_rne.hex", "r");
-					if (data_file == 0) begin
-						$display("Data file is not available!");
-						$finish;
-					end
 				end else begin
 					v.state = TEST1;
 					v.enable = 1;
@@ -113,29 +134,41 @@ module test_float_s
 				end else begin
 					v.enable = 1;
 					v.terminate = 0;
-					scan_file = $fscanf(data_file,"%h %h %h\n", dataread[0], dataread[1], dataread[2]);
+					scan_file = $fscanf(data_file,"%h %h %h %h\n", dataread[0], dataread[1], dataread[2], dataread[3]);
 				end
 				
 				if (v.terminate == 1) begin
+					$write("%c[1;34m",8'h1B);
+					$display({operation[i]," ",mode[j]});
+					$write("%c[0m",8'h1B);
 					$write("%c[1;32m",8'h1B);
 					$display("TEST SUCCEEDED");
 					$write("%c[0m",8'h1B);
 					$finish;
 				end
 
-				v.data1 = dataread[0];
-				v.data2 = 0;
-				v.data3 = 0;
-				v.result = dataread[1];
-				v.flags = dataread[2][4:0];
+				if (operation[i] == "f32_div") begin
+					v.data1 = dataread[0];
+					v.data2 = dataread[1];
+					v.data3 = 0;
+					v.result = dataread[2];
+					v.flags = dataread[3][4:0];
+				end else begin
+					v.data1 = dataread[0];
+					v.data2 = 0;
+					v.data3 = 0;
+					v.result = dataread[1];
+					v.flags = dataread[2][4:0];
+				end
+
 				v.fmt = 0;
-				v.rm = 0;
+				v.rm = rm[j];
 				v.op.fmadd = 0;
 				v.op.fadd = 0;
 				v.op.fsub = 0;
 				v.op.fmul = 0;
-				v.op.fdiv = 0;
-				v.op.fsqrt = 1;
+				v.op.fdiv = operation[i] == "f32_div" ? 1 : 0;
+				v.op.fsqrt = operation[i] == "f32_sqrt" ? 1 : 0;
 				v.op.fcmp = 0;
 				v.op.fcvt_i2f = 0;
 				v.op.fcvt_f2i = 0;
@@ -143,6 +176,7 @@ module test_float_s
 
 				if (reset == 0) begin
 					v.op = init_fp_operation;
+					v.enable = 0;
 				end
 			end
 			TEST1 : begin
@@ -165,10 +199,14 @@ module test_float_s
 					v.flags_diff = 0;
 				end
 				v.op = init_fp_operation;
+				v.enable = 0;
 			end
 			TEST2 : begin
 				if (v.ready_calc == 1) begin
 					if ((v.result_diff != 0) || (v.flags_diff != 0)) begin
+						$write("%c[1;34m",8'h1B);
+						$display({operation[i]," ",mode[j]});
+						$write("%c[0m",8'h1B);
 						$write("%c[1;31m",8'h1B);
 						$display("TEST FAILED");
 						$display("A                 = 0x%H",r.data1);
@@ -185,9 +223,11 @@ module test_float_s
 					end
 				end
 				v.op = init_fp_operation;
+				v.enable = 0;
 			end
 			default : begin
 				v.op = init_fp_operation;
+				v.enable = 0;
 			end
 		endcase
 
