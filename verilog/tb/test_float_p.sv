@@ -77,7 +77,11 @@ module test_float_p
 
 		@(posedge clock);
 
-		v_initial = r_3;
+		v_initial = init_fp_res;
+
+		v_initial.load = r_1.load;
+		v_initial.i = r_1.i;
+		v_initial.j = r_1.j;
 
 		if (v_initial.load == 0) begin
 			filename = {operation[v_initial.i],"_",mode[v_initial.j],".hex"};
@@ -93,12 +97,6 @@ module test_float_p
 			v_initial.enable = 1;
 			v_initial.terminate = 1;
 			dataread = '{default:0};
-			if (v_initial.j == 4 && v_initial.i == 3) begin
-				$finish;
-			end
-			v_initial.i = v_initial.j == 4 ? v_initial.i + 1 : v_initial.i;
-			v_initial.j = v_initial.j == 4 ? 0 : v_initial.j + 1;
-			v_initial.load = 0;
 		end else begin
 			v_initial.enable = 1;
 			v_initial.terminate = 0;
@@ -107,6 +105,22 @@ module test_float_p
 			end else begin
 				scan_file = $fscanf(data_file,"%h %h %h %h\n", dataread[0], dataread[1], dataread[2], dataread[3]);
 			end
+		end
+
+		if (v_initial.terminate == 1) begin
+			$write("%c[1;34m",8'h1B);
+			$display({operation[v_initial.i]," ",mode[v_initial.j]});
+			$write("%c[0m",8'h1B);
+			$write("%c[1;32m",8'h1B);
+			$display("TEST SUCCEEDED");
+			$write("%c[0m",8'h1B);
+			$fclose(data_file);
+			if (v_initial.j == 4 && v_initial.i == 3) begin
+				$finish;
+			end
+			v_initial.i = v_initial.j == 4 ? v_initial.i + 1 : v_initial.i;
+			v_initial.j = v_initial.j == 4 ? 0 : v_initial.j + 1;
+			v_initial.load = 0;
 		end
 
 		if (operation[v_initial.i] == "f32_mulAdd") begin
@@ -173,15 +187,7 @@ module test_float_p
 		end
 
 		if (v_final.ready_calc == 1) begin
-			if (v_final.terminate == 1) begin
-				$write("%c[1;34m",8'h1B);
-				$display({operation[v_final.i]," ",mode[v_final.j]});
-				$write("%c[0m",8'h1B);
-				$write("%c[1;32m",8'h1B);
-				$display("TEST SUCCEEDED");
-				$write("%c[0m",8'h1B);
-				$fclose(data_file);
-			end else if ((v_final.result_diff != 0) || (v_final.flags_diff != 0)) begin
+			if ((v_final.result_diff != 0) || (v_final.flags_diff != 0)) begin
 				$write("%c[1;34m",8'h1B);
 				$display({operation[v_final.i]," ",mode[v_final.j]});
 				$write("%c[0m",8'h1B);

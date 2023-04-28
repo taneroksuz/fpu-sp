@@ -89,7 +89,7 @@ architecture behavior of test_float_p is
 	type rnd_type is array (0 to 4) of std_logic_vector(2 downto 0);
 
 	signal mode : mode_type := ("rne","rtz","rdn","rup","rmm");
-	signal rm : rnd_type := ("000","001","010","100","101");
+	signal rm : rnd_type := ("000","001","010","011","100");
 
 	function operation(
 		index : in integer) return string is
@@ -169,7 +169,11 @@ begin
 
 			else
 
-				initial := r_3;
+				initial := init_fpu_test_reg;
+
+				initial.load := r_1.load;
+				initial.i := r_1.i;
+				initial.j := r_1.j;
 
 				if initial.load = '0' then
 					file_open(status, infile, (operation(initial.i) & '_' & mode(initial.j) & ".hex"),  read_mode);
@@ -188,12 +192,6 @@ begin
 					data3 := "00000000";
 					result := "00000000";
 					flags := "00";
-					if (initial.j = 4 and initial.i = 3) then
-						finish;
-					end if;
-					initial.i := initial.i + 1 when initial.j = 4 else initial.i;
-					initial.j := 0 when initial.j = 4 else initial.j + 1;
-					initial.load := '0';
 				else
 					initial.terminate := '0';
 					initial.enable := '1';
@@ -213,13 +211,25 @@ begin
 					end if;
 				end if;
 
+				if (initial.terminate = '1') then
+					print(character'val(27) & "[1;34m" & (operation(initial.i) & '_' & mode(initial.j)) & character'val(27) & "[0m");
+					print(character'val(27) & "[1;32m" & "TEST SUCCEEDED" & character'val(27) & "[0m");
+					file_close(infile);
+					if (initial.j = 4 and initial.i = 3) then
+						finish;
+					end if;
+					initial.i := initial.i + 1 when initial.j = 4 else initial.i;
+					initial.j := 0 when initial.j = 4 else initial.j + 1;
+					initial.load := '0';
+				end if;
+
 				initial.data1 := read(data1);
 				initial.data2 := read(data2);
 				initial.data3 := read(data3);
 				initial.result := read(result);
 				initial.flags := read(flags)(4 downto 0);
 				initial.fmt := "00";
-				initial.rm := rm(initial.i);
+				initial.rm := rm(initial.j);
 				initial.op.fmadd := '1' when operation(initial.i) = "f32_mulAdd" else '0';
 				initial.op.fadd := '1' when operation(initial.i) = "f32_add" else '0';
 				initial.op.fsub := '1' when operation(initial.i) = "f32_sub" else '0';
@@ -264,11 +274,7 @@ begin
 			end if;
 
 			if (final.ready_calc = '1') then
-				if (final.terminate = '1') then
-					print(character'val(27) & "[1;34m" & (operation(final.i) & '_' & mode(final.j)) & character'val(27) & "[0m");
-					print(character'val(27) & "[1;32m" & "TEST SUCCEEDED" & character'val(27) & "[0m");
-					file_close(infile);
-				elsif (or final.result_diff = '1') or (or final.flags_diff = '1') then
+				if (or final.result_diff = '1') or (or final.flags_diff = '1') then
 					print(character'val(27) & "[1;34m" & (operation(final.i) & '_' & mode(final.j)) & character'val(27) & "[0m");
 					print(character'val(27) & "[1;31m" & "TEST FAILED");
 					print("A                 = 0x" & to_hstring(final.data1));

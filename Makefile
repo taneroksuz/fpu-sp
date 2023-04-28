@@ -31,4 +31,4 @@ simulate:
 		sim/test_lzc_vhdl.sh; \
 	fi
 
-all: generate simulation
+all: generate simulate

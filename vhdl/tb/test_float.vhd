@@ -89,7 +89,7 @@ architecture behavior of test_float is
 	type zero_type is array (0 to 6) of std_logic;
 
 	signal mode : mode_type := ("rne","rtz","rdn","rup","rmm");
-	signal rnd : rnd_type := ("000","001","010","100","101");
+	signal rnd : rnd_type := ("000","001","010","011","100");
 	signal rounding : zero_type := ('0','0','0','1','1','1','1');
 	signal cmp : zero_type := ('1','1','1','0','0','0','0');
 	signal i2f : zero_type := ('0','0','0','1','1','0','0');
@@ -175,95 +175,194 @@ begin
 
 				v := r;
 
-				if v.load = '0' then
-					file_open(status, infile, (operation(v.i) & ".hex"),  read_mode);
-					if status /= open_ok then
-						print(operation(v.i) & ".hex" & " is not available!");
+				if rounding(v.i) = '0' then
+
+					if v.load = '0' then
+						file_open(status, infile, (operation(v.i) & ".hex"),  read_mode);
+						if status /= open_ok then
+							print(operation(v.i) & ".hex" & " is not available!");
+							finish;
+						end if;
+						v.load := '1';
+					end if;
+
+					if endfile(infile) then
+						v.terminate := '1';
+						v.enable := '0';
+						data1 := "00000000";
+						data2 := "00000000";
+						data3 := "00000000";
+						result := "00000000";
+						flags := "00";
+					else
+						v.terminate := '0';
+						v.enable := '1';
+						readline(infile, inline);
+						data1 := inline.all(1 to 8);
+						data2 := inline.all(10 to 17);
+						data3 := "00000000";
+						result := "0000000" & inline.all(19 to 19);
+						flags := inline.all(21 to 22);
+					end if;
+					
+					if (v.terminate = '1') then
+						print(character'val(27) & "[1;34m" & operation(v.i) & character'val(27) & "[0m");
+						print(character'val(27) & "[1;32m" & "TEST SUCCEEDED" & character'val(27) & "[0m");
+						file_close(infile);
+						v.i := v.i + 1;
+						v.load := '0';
+					end if;
+
+					v.data1 := read(data1);
+					v.data2 := read(data2);
+					v.data3 := read(data3);
+					v.result := read(result);
+					v.flags := read(flags)(4 downto 0);
+					v.fmt := "00";
+					v.rm := rm(v.i);
+					v.op.fmadd := '0';
+					v.op.fadd := '0';
+					v.op.fsub := '0';
+					v.op.fmul := '0';
+					v.op.fdiv := '0';
+					v.op.fsqrt := '0';
+					v.op.fcmp := cmp(v.i);
+					v.op.fcvt_i2f := i2f(v.i);
+					v.op.fcvt_f2i := f2i(v.i);
+					v.op.fcvt_op := op(v.i);
+
+					fpu_i.fp_exe_i.data1 <= v.data1;
+					fpu_i.fp_exe_i.data2 <= v.data2;
+					fpu_i.fp_exe_i.data3 <= v.data3;
+					fpu_i.fp_exe_i.op <= v.op;
+					fpu_i.fp_exe_i.fmt <= v.fmt;
+					fpu_i.fp_exe_i.rm <= v.rm;
+					fpu_i.fp_exe_i.enable <= v.enable;
+
+					v.result_orig := r.result;
+					v.flags_orig := r.flags;
+
+					v.result_calc := fpu_o.fp_exe_o.result;
+					v.flags_calc := fpu_o.fp_exe_o.flags;
+
+					if (v.op.fcvt_f2i = '0' and v.op.fcmp = '0') and (v.result_calc = x"7FC00000") then
+						v.result_diff := "0" & (v.result_orig(30 downto 22) xor v.result_calc(30 downto 22)) & "00" & x"00000";
+					else
+						v.result_diff := v.result_orig xor v.result_calc;
+					end if;
+					v.flags_diff := v.flags_orig xor v.flags_calc;
+
+					if (or v.result_diff = '1') or (or v.flags_diff = '1') then
+						print(character'val(27) & "[1;34m" & operation(v.i) & character'val(27) & "[0m");
+						print(character'val(27) & "[1;31m" & "TEST FAILED");
+						print("A                 = 0x" & to_hstring(r.data1));
+						print("B                 = 0x" & to_hstring(r.data2));
+						print("C                 = 0x" & to_hstring(r.data3));
+						print("RESULT DIFFERENCE = 0x" & to_hstring(v.result_diff));
+						print("RESULT REFERENCE  = 0x" & to_hstring(v.result_orig));
+						print("RESULT CALCULATED = 0x" & to_hstring(v.result_calc));
+						print("FLAGS DIFFERENCE  = 0x" & to_hstring(v.flags_diff));
+						print("FLAGS REFERENCE   = 0x" & to_hstring(v.flags_orig));
+						print("FLAGS CALCULATED  = 0x" & to_hstring(v.flags_calc) & character'val(27) & "[0m");
 						finish;
 					end if;
-					v.load := '1';
-				end if;
 
-				if endfile(infile) then
-					v.terminate := '1';
-					v.enable := '0';
-					data1 := "00000000";
-					data2 := "00000000";
-					data3 := "00000000";
-					result := "00000000";
-					flags := "00";
 				else
-					v.terminate := '0';
-					v.enable := '1';
-					readline(infile, inline);
-					data1 := inline.all(1 to 8);
-					data2 := inline.all(10 to 17);
-					data3 := "00000000";
-					result := "0000000" & inline.all(19 to 19);
-					flags := inline.all(21 to 22);
-				end if;
 
-				v.data1 := read(data1);
-				v.data2 := read(data2);
-				v.data3 := read(data3);
-				v.result := read(result);
-				v.flags := read(flags)(4 downto 0);
-				v.fmt := "00";
-				v.rm := rm(v.i);
-				v.op.fmadd := '0';
-				v.op.fadd := '0';
-				v.op.fsub := '0';
-				v.op.fmul := '0';
-				v.op.fdiv := '0';
-				v.op.fsqrt := '0';
-				v.op.fcmp := cmp(v.i);
-				v.op.fcvt_i2f := i2f(v.i);
-				v.op.fcvt_f2i := f2i(v.i);
-				v.op.fcvt_op := op(v.i);
+					if v.load = '0' then
+						file_open(status, infile, (operation(v.i) & '_' & mode(v.j) & ".hex"),  read_mode);
+						if status /= open_ok then
+							print(operation(v.i) & '_' & mode(v.j) & ".hex" & " is not available!");
+							finish;
+						end if;
+						v.load := '1';
+					end if;
 
-				fpu_i.fp_exe_i.data1 <= v.data1;
-				fpu_i.fp_exe_i.data2 <= v.data2;
-				fpu_i.fp_exe_i.data3 <= v.data3;
-				fpu_i.fp_exe_i.op <= v.op;
-				fpu_i.fp_exe_i.fmt <= v.fmt;
-				fpu_i.fp_exe_i.rm <= v.rm;
-				fpu_i.fp_exe_i.enable <= v.enable;
+					if endfile(infile) then
+						v.terminate := '1';
+						v.enable := '0';
+						data1 := "00000000";
+						data2 := "00000000";
+						data3 := "00000000";
+						result := "00000000";
+						flags := "00";
+					else
+						v.terminate := '0';
+						v.enable := '1';
+						readline(infile, inline);
+						data1 := inline.all(1 to 8);
+						data2 := "00000000";
+						data3 := "00000000";
+						result := inline.all(10 to 17);
+						flags := inline.all(19 to 20);
+					end if;
+					
+					if (v.terminate = '1') then
+						print(character'val(27) & "[1;34m" & operation(v.i) & '_' & mode(v.j) & character'val(27) & "[0m");
+						print(character'val(27) & "[1;32m" & "TEST SUCCEEDED" & character'val(27) & "[0m");
+						file_close(infile);
+						if v.j = 4 and v.i = 6 then
+							finish;
+						end if;
+						v.i := v.i + 1 when v.j = 4 else v.i;
+						v.j := 0 when v.j = 4 else v.j + 1;
+						v.load := '0';
+					end if;
 
-				v.result_orig := r.result;
-				v.flags_orig := r.flags;
+					v.data1 := read(data1);
+					v.data2 := read(data2);
+					v.data3 := read(data3);
+					v.result := read(result);
+					v.flags := read(flags)(4 downto 0);
+					v.fmt := "00";
+					v.rm := rnd(v.j);
+					v.op.fmadd := '0';
+					v.op.fadd := '0';
+					v.op.fsub := '0';
+					v.op.fmul := '0';
+					v.op.fdiv := '0';
+					v.op.fsqrt := '0';
+					v.op.fcmp := cmp(v.i);
+					v.op.fcvt_i2f := i2f(v.i);
+					v.op.fcvt_f2i := f2i(v.i);
+					v.op.fcvt_op := op(v.i);
 
-				v.result_calc := fpu_o.fp_exe_o.result;
-				v.flags_calc := fpu_o.fp_exe_o.flags;
+					fpu_i.fp_exe_i.data1 <= v.data1;
+					fpu_i.fp_exe_i.data2 <= v.data2;
+					fpu_i.fp_exe_i.data3 <= v.data3;
+					fpu_i.fp_exe_i.op <= v.op;
+					fpu_i.fp_exe_i.fmt <= v.fmt;
+					fpu_i.fp_exe_i.rm <= v.rm;
+					fpu_i.fp_exe_i.enable <= v.enable;
 
-				if (v.op.fcvt_f2i = '0' and v.op.fcmp = '0') and (v.result_calc = x"7FC00000") then
-					v.result_diff := "0" & (v.result_orig(30 downto 22) xor v.result_calc(30 downto 22)) & "00" & x"00000";
-				else
-					v.result_diff := v.result_orig xor v.result_calc;
-				end if;
-				v.flags_diff := v.flags_orig xor v.flags_calc;
+					v.result_orig := r.result;
+					v.flags_orig := r.flags;
 
-				if (v.terminate = '1') then
-					print(character'val(27) & "[1;34m" & operation(v.i) & character'val(27) & "[0m");
-					print(character'val(27) & "[1;32m" & "TEST SUCCEEDED" & character'val(27) & "[0m");
-					if v.i = 2 then
+					v.result_calc := fpu_o.fp_exe_o.result;
+					v.flags_calc := fpu_o.fp_exe_o.flags;
+
+					if (v.op.fcvt_f2i = '0' and v.op.fcmp = '0') and (v.result_calc = x"7FC00000") then
+						v.result_diff := "0" & (v.result_orig(30 downto 22) xor v.result_calc(30 downto 22)) & "00" & x"00000";
+					else
+						v.result_diff := v.result_orig xor v.result_calc;
+					end if;
+					v.flags_diff := v.flags_orig xor v.flags_calc;
+
+					if (or v.result_diff = '1') or (or v.flags_diff = '1') then
+						print(character'val(27) & "[1;34m" & operation(v.i) & '_' & mode(v.j) & character'val(27) & "[0m");
+						print(character'val(27) & "[1;31m" & "TEST FAILED");
+						print("A                 = 0x" & to_hstring(r.data1));
+						print("B                 = 0x" & to_hstring(r.data2));
+						print("C                 = 0x" & to_hstring(r.data3));
+						print("RESULT DIFFERENCE = 0x" & to_hstring(v.result_diff));
+						print("RESULT REFERENCE  = 0x" & to_hstring(v.result_orig));
+						print("RESULT CALCULATED = 0x" & to_hstring(v.result_calc));
+						print("FLAGS DIFFERENCE  = 0x" & to_hstring(v.flags_diff));
+						print("FLAGS REFERENCE   = 0x" & to_hstring(v.flags_orig));
+						print("FLAGS CALCULATED  = 0x" & to_hstring(v.flags_calc) & character'val(27) & "[0m");
 						finish;
 					end if;
-					v.i := v.i + 1;
-					v.load := '0';
-					file_close(infile);
-				elsif (or v.result_diff = '1') or (or v.flags_diff = '1') then
-					print(character'val(27) & "[1;34m" & operation(v.i) & character'val(27) & "[0m");
-					print(character'val(27) & "[1;31m" & "TEST FAILED");
-					print("A                 = 0x" & to_hstring(r.data1));
-					print("B                 = 0x" & to_hstring(r.data2));
-					print("C                 = 0x" & to_hstring(r.data3));
-					print("RESULT DIFFERENCE = 0x" & to_hstring(v.result_diff));
-					print("RESULT REFERENCE  = 0x" & to_hstring(v.result_orig));
-					print("RESULT CALCULATED = 0x" & to_hstring(v.result_calc));
-					print("FLAGS DIFFERENCE  = 0x" & to_hstring(v.flags_diff));
-					print("FLAGS REFERENCE   = 0x" & to_hstring(v.flags_orig));
-					print("FLAGS CALCULATED  = 0x" & to_hstring(v.flags_calc) & character'val(27) & "[0m");
-					finish;
+
 				end if;
 
 				r <= v;

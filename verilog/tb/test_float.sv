@@ -104,6 +104,18 @@ module test_float
 				scan_file = $fscanf(data_file,"%h %h %h %h\n", dataread[0], dataread[1], dataread[2], dataread[3]);
 			end
 
+			if (v.terminate == 1) begin
+				$write("%c[1;34m",8'h1B);
+				$display(operation[v.i]);
+				$write("%c[0m",8'h1B);
+				$write("%c[1;32m",8'h1B);
+				$display("TEST SUCCEEDED");
+				$write("%c[0m",8'h1B);
+				v.i = v.i + 1;
+				v.load = 0;
+				$fclose(data_file);
+			end
+
 			v.data1 = dataread[0];
 			v.data2 = dataread[1];
 			v.data3 = 0;
@@ -148,17 +160,7 @@ module test_float
 			end
 			v.flags_diff = v.flags_orig ^ v.flags_calc;
 
-			if (v.terminate == 1) begin
-				$write("%c[1;34m",8'h1B);
-				$display(operation[v.i]);
-				$write("%c[0m",8'h1B);
-				$write("%c[1;32m",8'h1B);
-				$display("TEST SUCCEEDED");
-				$write("%c[0m",8'h1B);
-				v.i = v.i + 1;
-				v.load = 0;
-				$fclose(data_file);
-			end else if ((v.result_diff != 0) || (v.flags_diff != 0)) begin
+			if ((v.result_diff != 0) || (v.flags_diff != 0)) begin
 				$write("%c[1;34m",8'h1B);
 				$display(operation[v.i]);
 				$write("%c[0m",8'h1B);
@@ -197,6 +199,22 @@ module test_float
 				v.enable = 1;
 				v.terminate = 0;
 				scan_file = $fscanf(data_file,"%h %h %h\n", dataread[0], dataread[1], dataread[2]);
+			end
+
+			if (v.terminate == 1) begin
+				$write("%c[1;34m",8'h1B);
+				$display({operation[v.i]," ",mode[v.j]});
+				$write("%c[0m",8'h1B);
+				$write("%c[1;32m",8'h1B);
+				$display("TEST SUCCEEDED");
+				$write("%c[0m",8'h1B);
+				$fclose(data_file);
+				if (v.j == 4 && v.i == 6) begin
+					$finish;
+				end
+				v.i = v.j == 4 ? v.i + 1 : v.i;
+				v.j = v.j == 4 ? 0 : v.j + 1;
+				v.load = 0;
 			end
 
 			v.data1 = dataread[0];
@@ -243,21 +261,7 @@ module test_float
 			end
 			v.flags_diff = v.flags_orig ^ v.flags_calc;
 
-			if (v.terminate == 1) begin
-				$write("%c[1;34m",8'h1B);
-				$display({operation[v.i]," ",mode[v.j]});
-				$write("%c[0m",8'h1B);
-				$write("%c[1;32m",8'h1B);
-				$display("TEST SUCCEEDED");
-				$write("%c[0m",8'h1B);
-				if (v.j == 4 && v.i == 6) begin
-					$finish;
-				end
-				v.i = v.j == 4 ? v.i + 1 : v.i;
-				v.j = v.j == 4 ? 0 : v.j + 1;
-				v.load = 0;
-				$fclose(data_file);
-			end else if ((v.result_diff != 0) || (v.flags_diff != 0)) begin
+			if ((v.result_diff != 0) || (v.flags_diff != 0)) begin
 				$write("%c[1;34m",8'h1B);
 				$display({operation[v.i]," ",mode[v.j]});
 				$write("%c[0m",8'h1B);

@@ -92,7 +92,7 @@ architecture behavior of test_float_s is
 	type rnd_type is array (0 to 4) of std_logic_vector(2 downto 0);
 
 	signal mode : mode_type := ("rne","rtz","rdn","rup","rmm");
-	signal rm : rnd_type := ("000","001","010","100","101");
+	signal rm : rnd_type := ("000","001","010","011","100");
 
 	function operation(
 		index : in integer) return string is
@@ -248,7 +248,7 @@ begin
 				v.result := read(result);
 				v.flags := read(flags)(4 downto 0);
 				v.fmt := "00";
-				v.rm := rm(v.i);
+				v.rm := rm(v.j);
 				v.op.fmadd := '0';
 				v.op.fadd := '0';
 				v.op.fsub := '0';
