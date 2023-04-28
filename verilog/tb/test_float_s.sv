@@ -9,9 +9,10 @@ module test_float_s
 	timeunit 1ns;
 	timeprecision 1ps;
 
-	localparam TEST0 = 0;
-	localparam TEST1 = 1;
-	localparam TEST2 = 2;
+	localparam IDLE = 0;
+	localparam TEST0 = 1;
+	localparam TEST1 = 2;
+	localparam TEST2 = 3;
 
 	integer data_file;
 	integer scan_file;
@@ -43,7 +44,7 @@ module test_float_s
 	} fp_result;
 
 	fp_result init_fp_res = '{
-		state : TEST0,
+		state : IDLE,
 		data1 : 0,
 		data2 : 0,
 		data3 : 0,
@@ -95,15 +96,17 @@ module test_float_s
 		end
 
 		case(r.state)
+			IDLE : begin
+				v.state = TEST0;
+				v.enable = 0;
+			end
 			TEST0 : begin
-				if (reset == 0) begin
+				if ($feof(data_file) == 0) begin
+					v.state = TEST1;
+					v.enable = 1;
+				end else begin
 					v.state = TEST0;
 					v.enable = 0;
-				end else begin
-					if ($feof(data_file) == 0) begin
-						v.state = TEST1;
-						v.enable = 1;
-					end
 				end
 			end
 			TEST1 : begin
@@ -123,6 +126,10 @@ module test_float_s
 		endcase
 
 		case(r.state)
+			IDLE : begin
+				v.op = init_fp_operation;
+				v.enable = 0;
+			end
 			TEST0 : begin
 				if ($feof(data_file)) begin
 					v.enable = 0;
@@ -148,9 +155,10 @@ module test_float_s
 					if (v.j == 4 && v.i == 1) begin
 						$finish;
 					end
-					v.i = v.j == 4 ? (v.i == 1 ? 0 : v.i + 1) : v.i;
+					v.i = v.j == 4 ? v.i + 1 : v.i;
 					v.j = v.j == 4 ? 0 : v.j + 1;
 					v.load = 0;
+					$fclose(data_file);
 				end
 
 				if (operation[v.i] == "f32_div") begin

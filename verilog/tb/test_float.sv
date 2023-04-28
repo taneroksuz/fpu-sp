@@ -157,6 +157,7 @@ module test_float
 				$write("%c[0m",8'h1B);
 				v.i = v.i + 1;
 				v.load = 0;
+				$fclose(data_file);
 			end else if ((v.result_diff != 0) || (v.flags_diff != 0)) begin
 				$write("%c[1;34m",8'h1B);
 				$display(operation[v.i]);
@@ -252,9 +253,10 @@ module test_float
 				if (v.j == 4 && v.i == 6) begin
 					$finish;
 				end
-				v.i = v.j == 4 ? (v.i == 6 ? 0 : v.i + 1) : v.i;
+				v.i = v.j == 4 ? v.i + 1 : v.i;
 				v.j = v.j == 4 ? 0 : v.j + 1;
 				v.load = 0;
+				$fclose(data_file);
 			end else if ((v.result_diff != 0) || (v.flags_diff != 0)) begin
 				$write("%c[1;34m",8'h1B);
 				$display({operation[v.i]," ",mode[v.j]});

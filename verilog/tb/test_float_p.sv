@@ -96,7 +96,7 @@ module test_float_p
 			if (v_initial.j == 4 && v_initial.i == 3) begin
 				$finish;
 			end
-			v_initial.i = v_initial.j == 4 ? (v_initial.i == 3 ? 0 : v_initial.i + 1) : v_initial.i;
+			v_initial.i = v_initial.j == 4 ? v_initial.i + 1 : v_initial.i;
 			v_initial.j = v_initial.j == 4 ? 0 : v_initial.j + 1;
 			v_initial.load = 0;
 		end else begin
@@ -180,6 +180,7 @@ module test_float_p
 				$write("%c[1;32m",8'h1B);
 				$display("TEST SUCCEEDED");
 				$write("%c[0m",8'h1B);
+				$fclose(data_file);
 			end else if ((v_final.result_diff != 0) || (v_final.flags_diff != 0)) begin
 				$write("%c[1;34m",8'h1B);
 				$display({operation[v_final.i]," ",mode[v_final.j]});

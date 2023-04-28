@@ -29,7 +29,7 @@ architecture behavior of test_float_s is
 		);
 	end component;
 
-	type test_state_type is (TEST0, TEST1, TEST2);
+	type test_state_type is (IDLE, TEST0, TEST1, TEST2);
 
 	type fpu_test_reg_type is record
 		state       : test_state_type;
@@ -50,10 +50,13 @@ architecture behavior of test_float_s is
 		flags_diff  : std_logic_vector(4 downto 0);
 		ready_calc  : std_logic;
 		terminate   : std_logic;
+		load        : std_logic;
+		i           : integer;
+		j           : integer;
 	end record;
 
 	constant init_fpu_test_reg : fpu_test_reg_type := (
-		state       => TEST0,
+		state       => IDLE,
 		data1       => (others => '0'),
 		data2       => (others => '0'),
 		data3       => (others => '0'),
@@ -70,7 +73,10 @@ architecture behavior of test_float_s is
 		flags_calc  => (others => '0'),
 		flags_diff  => (others => '0'),
 		ready_calc  => '0',
-		terminate   => '0'
+		terminate   => '0',
+		load        => '0',
+		i           => 0,
+		j           => 0
 	);
 
 	signal reset : std_logic := '0';
@@ -81,6 +87,22 @@ architecture behavior of test_float_s is
 
 	signal fpu_i : fp_unit_in_type;
 	signal fpu_o : fp_unit_out_type;
+
+	type mode_type is array (0 to 4) of string(1 to 3);
+	type rnd_type is array (0 to 4) of std_logic_vector(2 downto 0);
+
+	signal mode : mode_type := ("rne","rtz","rdn","rup","rmm");
+	signal rm : rnd_type := ("000","001","010","100","101");
+
+	function operation(
+		index : in integer) return string is
+	begin
+			case index is
+					when 0 => return("f32_div");
+					when 1 => return("f32_sqrt");
+					when others => return("");
+			end case;
+	end function operation;
 
 	procedure print(
 		msg : in string) is
@@ -122,7 +144,8 @@ begin
 		);
 
 	process(r,fpu_o)
-		file infile     : text open read_mode is "f32_sqrt_rne.hex";
+		file infile     : text;
+  	variable status : file_open_status;
 		variable inline : line;
 
 		variable data1  : string(1 to 8) := "00000000";
@@ -134,15 +157,29 @@ begin
 		variable v : fpu_test_reg_type;
 
 	begin
+
 		v := r;
 
+		if v.load = '0' then
+			file_open(status, infile, (operation(v.i) & '_' & mode(v.j) & ".hex"), read_mode);
+			if status /= open_ok then
+				print(operation(v.i) & '_' & mode(v.j) & ".hex" & " is not available!");
+				finish;
+			end if;
+			v.load := '1';
+		end if;
+
 		case r.state is
+			when IDLE =>
+				v.state := TEST0;
+				v.enable := '0';
 			when TEST0 =>
-				if reset = '0' then
-					v.enable := '0';
-				else
-					v.enable := '1';
+				if not endfile(infile) then
 					v.state := TEST1;
+					v.enable := '1';
+				else
+					v.state := TEST0;
+					v.enable := '0';
 				end if;
 			when TEST1 =>
 				if fpu_o.fp_exe_o.ready = '1' then
@@ -159,11 +196,16 @@ begin
 
 		case r.state is
 
+			when IDLE =>
+
+				v.op := init_fp_operation;
+				v.enable := '0';
+
 			when TEST0 =>
 
 				if endfile(infile) then
 					v.terminate := '1';
-					v.enable := '1';
+					v.enable := '0';
 					data1 := "00000000";
 					data2 := "00000000";
 					data3 := "00000000";
@@ -173,16 +215,31 @@ begin
 					v.terminate := '0';
 					v.enable := '1';
 					readline(infile, inline);
-					data1 := inline.all(1 to 8);
-					data2 := "00000000";
-					data3 := "00000000";
-					result := inline.all(10 to 17);
-					flags := inline.all(19 to 20);
+					if operation(v.i) = "f32_div" then
+						data1 := inline.all(1 to 8);
+						data2 := inline.all(10 to 17);
+						data3 := "00000000";
+						result := inline.all(19 to 26);
+						flags := inline.all(28 to 29);
+					else
+						data1 := inline.all(1 to 8);
+						data2 := "00000000";
+						data3 := "00000000";
+						result := inline.all(10 to 17);
+						flags := inline.all(19 to 20);
+					end if;
 				end if;
 
 				if (v.terminate = '1') then
+					print(character'val(27) & "[1;34m" & (operation(v.i) & '_' & mode(v.j)) & character'val(27) & "[0m");
 					print(character'val(27) & "[1;32m" & "TEST SUCCEEDED" & character'val(27) & "[0m");
-					finish;
+					if (v.j = 4 and v.i = 1) then
+						finish;
+					end if;
+					v.i := v.i + 1 when v.j = 4 else v.i;
+					v.j := 0 when v.j = 4 else v.j + 1;
+					v.load := '0';
+					file_close(infile);
 				end if;
 
 				v.data1 := read(data1);
@@ -191,13 +248,13 @@ begin
 				v.result := read(result);
 				v.flags := read(flags)(4 downto 0);
 				v.fmt := "00";
-				v.rm := "000";
+				v.rm := rm(v.i);
 				v.op.fmadd := '0';
 				v.op.fadd := '0';
 				v.op.fsub := '0';
 				v.op.fmul := '0';
-				v.op.fdiv := '0';
-				v.op.fsqrt := '1';
+				v.op.fdiv := '1' when operation(v.i) = "f32_div" else '0';
+				v.op.fsqrt := '1' when operation(v.i) = "f32_sqrt" else '0';
 				v.op.fcmp := '0';
 				v.op.fcvt_i2f := '0';
 				v.op.fcvt_f2i := '0';
@@ -205,6 +262,7 @@ begin
 
 				if reset = '0' then
 					v.op := init_fp_operation;
+					v.enable := '0';
 				end if;
 
 			when TEST1 =>
@@ -223,14 +281,16 @@ begin
 						v.result_diff := v.result_orig xor v.result_calc;
 					end if;
 					v.flags_diff := v.flags_orig xor v.flags_calc;
-
-					v.op := init_fp_operation;
 				end if;
+
+				v.op := init_fp_operation;
+				v.enable := '0';
 
 			when TEST2 =>
 
 				if (v.ready_calc = '1') then
 					if (or v.result_diff = '1') or (or v.flags_diff = '1') then
+						print(character'val(27) & "[1;34m" & (operation(v.i) & '_' & mode(v.j)) & character'val(27) & "[0m");
 						print(character'val(27) & "[1;31m" & "TEST FAILED");
 						print("A                 = 0x" & to_hstring(v.data1));
 						print("B                 = 0x" & to_hstring(v.data2));
@@ -245,10 +305,12 @@ begin
 				end if;
 
 				v.op := init_fp_operation;
+				v.enable := '0';
 
 			when others =>
 
-				null;
+				v.op := init_fp_operation;
+				v.enable := '0';
 
 		end case;
 
