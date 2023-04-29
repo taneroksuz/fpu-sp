@@ -46,11 +46,11 @@ To simulate the design together with generated test cases you could run followin
 make simulate
 ```
 
-This command require three options **LANGUAGE**, **DESIGN** and **TEST**. The possible settings of these options can be found in the makefile.
+This command require two options **LANGUAGE** and **DESIGN**. The possible settings of these options can be found in the makefile.
 
 An example execution of this command looks like as follows:
 
 ```console
-make simulate LANGUAGE=verilog DESIGN=fpu TEST=all
+make simulate LANGUAGE=verilog DESIGN=fpu
 ```
 
