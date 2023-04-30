@@ -25,6 +25,7 @@ module fp_rnd
 	logic odd;
 	logic rndup;
 	logic rnddn;
+	logic shift;
 	logic [31:0] result;
 	logic [4:0] flags;
 
@@ -78,11 +79,19 @@ module fp_rnd
 			end
 		end
 
-		if (expo == 0) begin
-			flags[1] = flags[0];
-		end
+		//if (expo == 0) begin
+		//	flags[1] = flags[0];
+		//end
 
 		mant = mant + {24'h0,rndup};
+
+		if (rndup == 1) begin
+			if (expo == 0) begin
+				if (mant[23]) begin
+					expo = 1;
+				end
+			end
+		end
 
 		if (rnddn == 1) begin
 			if (expo >= 255) begin
@@ -90,34 +99,29 @@ module fp_rnd
 				mant = {2'b0,{23{1'b1}}};
 				flags = 5'b00101;
 			end
-		end else if (rndup == 1) begin
-			if (expo == 0) begin
-				if (mant[23]) begin
-					expo = 1;
-					case (grs)
-						0 : flags[1] = 1;
-						1 : flags[1] = 1;
-						2 : flags[1] = 1;
-						3 : flags[1] = 1;
-						4 : flags[1] = 1;
-						5 : flags[1] = (rm == 2 || rm == 3) ? 0 : 1;
-						6 : flags[1] = 0;
-						7 : flags[1] = 0;
-						default :;
-					endcase
+		end
+
+		shift = 0;
+		if (fmt == 0) begin
+			if (mant[24]) begin
+				shift = 1;
+			end
+		end
+
+		expo = expo + {10'h0,shift};
+		mant = mant >> shift;
+
+		if (expo == 0) begin
+			flags[1] = flags[0];
+		end
+
+		if (rndup == 1) begin
+			if (expo == 1) begin
+				if (|mant[22:0] == 0) begin
+					flags[1] = rm == 2 || rm == 3 ? ((grs == 1) | (grs == 2) | (grs == 3) | (grs == 4)) : ((grs == 4) | (grs == 5));
 				end
 			end
 		end
-
-		rndup = 0;
-		if (fmt == 0) begin
-			if (mant[24]) begin
-				rndup = 1;
-			end
-		end
-
-		expo = expo + {10'h0,rndup};
-		mant = mant >> rndup;
 
 		if (snan) begin
 			flags = 5'b10000;
