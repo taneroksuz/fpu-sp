@@ -262,13 +262,12 @@ begin
 				final.flags_calc := fpu_o.fp_exe_o.flags;
 				final.ready_calc := fpu_o.fp_exe_o.ready;
 
-				if (final.ready_calc = '1') then
-					if (final.op.fcvt_f2i = '0' and final.op.fcmp = '0') and (final.result_calc = x"7FC00000") then
-						final.result_diff := "0" & (final.result_orig(30 downto 22) xor final.result_calc(30 downto 22)) & "00" & x"00000";
-					else
-						final.result_diff := final.result_orig xor final.result_calc;
-					end if;
-					final.flags_diff := final.flags_orig xor final.flags_calc;
+				final.result_diff := final.result_orig xor final.result_calc;
+				final.flags_diff := final.flags_orig xor final.flags_calc;
+
+				if ((final.op.fcvt_f2i and final.op.fcmp) = '0' and final.result_calc = x"7FC00000") then
+					final.result_diff(21 downto 0) := (others => '0');
+					final.result_diff(31) := '0';
 				end if;
 
 			end if;

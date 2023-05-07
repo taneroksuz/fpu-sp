@@ -2,8 +2,8 @@ import fp_wire::*;
 
 module test_float
 (
-  input  logic reset,
-  input  logic clock
+	input  logic reset,
+	input  logic clock
 );
 
 	timeunit 1ns;
@@ -95,7 +95,7 @@ module test_float
 			end
 
 			if ($feof(data_file)) begin
-				v.enable = 1;
+				v.enable = 0;
 				v.terminate = 1;
 				dataread = '{default:0};
 			end else begin
@@ -153,12 +153,13 @@ module test_float
 			v.result_calc = fp_unit_o.fp_exe_o.result;
 			v.flags_calc = fp_unit_o.fp_exe_o.flags;
 
-			if ((v.op.fcvt_f2i == 0 && v.op.fcmp == 0) && v.result_calc[31:0] == 32'h7FC00000) begin
-				v.result_diff = {1'h0,v.result_orig[30:22] ^ v.result_calc[30:22],22'h0};
-			end else begin
-				v.result_diff = v.result_orig ^ v.result_orig;
-			end
+			v.result_diff = v.result_orig ^ v.result_calc;
 			v.flags_diff = v.flags_orig ^ v.flags_calc;
+
+			if ((r.op.fcvt_f2i & r.op.fcmp) == 0 && v.result_calc == 32'h7FC00000) begin
+				v.result_diff[21:0] = 0;
+				v.result_diff[31] = 0;
+			end
 
 			if ((v.result_diff != 0) || (v.flags_diff != 0)) begin
 				$write("%c[1;34m",8'h1B);
@@ -254,12 +255,13 @@ module test_float
 			v.result_calc = fp_unit_o.fp_exe_o.result;
 			v.flags_calc = fp_unit_o.fp_exe_o.flags;
 
-			if ((v.op.fcvt_f2i == 0 && v.op.fcmp == 0) && v.result_calc[31:0] == 32'h7FC00000) begin
-				v.result_diff = {1'h0,v.result_orig[30:22] ^ v.result_calc[30:22],22'h0};
-			end else begin
-				v.result_diff = v.result_orig ^ v.result_orig;
-			end
+			v.result_diff = v.result_orig ^ v.result_calc;
 			v.flags_diff = v.flags_orig ^ v.flags_calc;
+
+			if ((r.op.fcvt_f2i & r.op.fcmp) == 0 && v.result_calc == 32'h7FC0000) begin
+				v.result_diff[21:0] = 0;
+				v.result_diff[31] = 0;
+			end
 
 			if ((v.result_diff != 0) || (v.flags_diff != 0)) begin
 				$write("%c[1;34m",8'h1B);

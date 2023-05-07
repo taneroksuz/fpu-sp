@@ -245,12 +245,13 @@ begin
 					v.result_calc := fpu_o.fp_exe_o.result;
 					v.flags_calc := fpu_o.fp_exe_o.flags;
 
-					if (v.op.fcvt_f2i = '0' and v.op.fcmp = '0') and (v.result_calc = x"7FC00000") then
-						v.result_diff := "0" & (v.result_orig(30 downto 22) xor v.result_calc(30 downto 22)) & "00" & x"00000";
-					else
-						v.result_diff := v.result_orig xor v.result_calc;
-					end if;
+					v.result_diff := v.result_orig xor v.result_calc;
 					v.flags_diff := v.flags_orig xor v.flags_calc;
+
+					if ((r.op.fcvt_f2i and r.op.fcmp) = '0' and v.result_calc = x"7FC00000") then
+						v.result_diff(21 downto 0) := (others => '0');
+						v.result_diff(31) := '0';
+					end if;
 
 					if (or v.result_diff = '1') or (or v.flags_diff = '1') then
 						print(character'val(27) & "[1;34m" & operation(v.i) & character'val(27) & "[0m");
@@ -341,12 +342,13 @@ begin
 					v.result_calc := fpu_o.fp_exe_o.result;
 					v.flags_calc := fpu_o.fp_exe_o.flags;
 
-					if (v.op.fcvt_f2i = '0' and v.op.fcmp = '0') and (v.result_calc = x"7FC00000") then
-						v.result_diff := "0" & (v.result_orig(30 downto 22) xor v.result_calc(30 downto 22)) & "00" & x"00000";
-					else
-						v.result_diff := v.result_orig xor v.result_calc;
-					end if;
+					v.result_diff := v.result_orig xor v.result_calc;
 					v.flags_diff := v.flags_orig xor v.flags_calc;
+
+					if ((r.op.fcvt_f2i and r.op.fcmp) = '0' and v.result_calc = x"7FC00000") then
+						v.result_diff(21 downto 0) := (others => '0');
+						v.result_diff(31) := '0';
+					end if;
 
 					if (or v.result_diff = '1') or (or v.flags_diff = '1') then
 						print(character'val(27) & "[1;34m" & operation(v.i) & '_' & mode(v.j) & character'val(27) & "[0m");
