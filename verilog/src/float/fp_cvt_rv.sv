@@ -192,6 +192,7 @@ module fp_cvt
 		fp_cvt_i2f_o.fp_rnd.dbz = v_i2f.dbz;
 		fp_cvt_i2f_o.fp_rnd.inf = v_i2f.inf;
 		fp_cvt_i2f_o.fp_rnd.zero = v_i2f.zero;
+		fp_cvt_i2f_o.fp_rnd.diff = 1'h0;
 
 	end
 

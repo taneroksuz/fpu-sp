@@ -91,8 +91,9 @@ module test_float_s
 			if (data_file == 0) begin
 				$display({filename," is not available!"});
 				$finish;
+			end else begin
+				v.load = 1;
 			end
-			v.load = 1;
 		end
 
 		case(r.state)
@@ -131,7 +132,7 @@ module test_float_s
 				v.enable = 0;
 			end
 			TEST0 : begin
-				if ($feof(data_file)) begin
+				if (v.load == 1 && $feof(data_file)) begin
 					v.enable = 0;
 					v.terminate = 1;
 					dataread = '{default:0};

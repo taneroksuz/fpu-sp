@@ -12,7 +12,6 @@ module fp_max
 	logic [31:0] data2;
 	logic [32:0] extend1;
 	logic [32:0] extend2;
-	logic [1:0] fmt;
 	logic [2:0] rm;
 	logic [9:0] class1;
 	logic [9:0] class2;
@@ -29,7 +28,6 @@ module fp_max
 		data2 = fp_max_i.data2;
 		extend1 = fp_max_i.ext1;
 		extend2 = fp_max_i.ext2;
-		fmt = fp_max_i.fmt;
 		rm = fp_max_i.rm;
 		class1 = fp_max_i.class1;
 		class2 = fp_max_i.class2;

@@ -23,7 +23,6 @@ begin
 		variable data2  : std_logic_vector(31 downto 0);
 		variable ext1   : std_logic_vector(32 downto 0);
 		variable ext2   : std_logic_vector(32 downto 0);
-		variable fmt    : std_logic_vector(1 downto 0);
 		variable rm     : std_logic_vector(2 downto 0);
 		variable class1 : std_logic_vector(9 downto 0);
 		variable class2 : std_logic_vector(9 downto 0);
@@ -39,7 +38,6 @@ begin
 		data2 := fp_max_i.data2;
 		ext1 := fp_max_i.ext1;
 		ext2 := fp_max_i.ext2;
-		fmt := fp_max_i.fmt;
 		rm := fp_max_i.rm;
 		class1 := fp_max_i.class1;
 		class2 := fp_max_i.class2;
