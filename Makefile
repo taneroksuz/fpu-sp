@@ -2,7 +2,6 @@ default: all
 
 export GHDL ?= ghdl
 export VERILATOR ?= verilator
-export SYSTEMC ?= systemc
 export TESTFLOAT ?= testfloat_gen
 export PYTHON ?= python3
 export BASEDIR ?= $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
