@@ -6,8 +6,6 @@ fi
 
 mkdir ${BASEDIR}/tests/test_cases
 
-chmod +x ${TESTFLOAT}
-
 OPERATION="f32_mulAdd f32_add f32_sub f32_mul f32_div f32_sqrt i32_to_f32 ui32_to_f32 f32_to_i32 f32_to_ui32"
 COMPARISON="f32_le f32_lt f32_eq"
 ROUNDING="rne rtz rdn rup rmm"
