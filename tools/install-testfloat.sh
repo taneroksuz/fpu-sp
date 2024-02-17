@@ -24,7 +24,7 @@ cd -
 cd berkeley-testfloat-3/build/Linux-x86_64-GCC
 make -j$(nproc)
 
-sudo mv -t /usr/local testfloat testfloat_gen testfloat_ver testsoftfloat timesoftfloat
+sudo mv -t /usr/local/bin testfloat testfloat_gen testfloat_ver testsoftfloat timesoftfloat
 
 sudo chmod +x /usr/local/bin/testfloat
 sudo chmod +x /usr/local/bin/testfloat_gen
