@@ -130,6 +130,8 @@ module test_float
 			v.op.fmul = 0;
 			v.op.fdiv = 0;
 			v.op.fsqrt = 0;
+			v.op.fmv_i2f = 0;
+			v.op.fmv_f2i = 0;
 			v.op.fcmp = cmp[v.i];
 			v.op.fcvt_i2f = i2f[v.i];
 			v.op.fcvt_f2i = f2i[v.i];
@@ -232,6 +234,8 @@ module test_float
 			v.op.fmul = 0;
 			v.op.fdiv = 0;
 			v.op.fsqrt = 0;
+			v.op.fmv_i2f = 0;
+			v.op.fmv_f2i = 0;
 			v.op.fcmp = cmp[v.i];
 			v.op.fcvt_i2f = i2f[v.i];
 			v.op.fcvt_f2i = f2i[v.i];
