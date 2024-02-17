@@ -146,6 +146,8 @@ module test_float_p
 		v_initial.op.fmul = operation[v_initial.i] == "f32_mul" ? 1 : 0;
 		v_initial.op.fdiv = 0;
 		v_initial.op.fsqrt = 0;
+		v_initial.op.fmv_i2f = 0;
+		v_initial.op.fmv_f2i = 0;
 		v_initial.op.fcmp = 0;
 		v_initial.op.fcvt_i2f = 0;
 		v_initial.op.fcvt_f2i = 0;
