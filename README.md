@@ -71,13 +71,13 @@ This floating point unit transform the single precision to the pseudo extended p
 
 | op | op.fcvt_op | fmt | type |
 |:---|:-----------|:----|:-----|
-| fcvt_i2f | "00" | "00" | CONVERSION FROM FLOAT TO INT32  |
-| fcvt_i2f | "01" | "00" | CONVERSION FROM FLOAT TO UINT32 |
+| fcvt_f2i | "00" | "00" | CONVERSION FROM FLOAT TO INT32  |
+| fcvt_f2i | "01" | "00" | CONVERSION FROM FLOAT TO UINT32 |
 
 | op | op.fcvt_op | fmt | type |
 |:---|:-----------|:----|:-----|
-| fcvt_f2i | "00" | "00" | CONVERSION FROM INT32 TO FLOAT  |
-| fcvt_f2i | "01" | "00" | CONVERSION FROM UINT32 TO FLOAT |
+| fcvt_i2f | "00" | "00" | CONVERSION FROM INT32 TO FLOAT  |
+| fcvt_i2f | "01" | "00" | CONVERSION FROM UINT32 TO FLOAT |
 
 | fmt | type |
 |:----|:-----|
