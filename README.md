@@ -93,7 +93,11 @@ This floating point unit transform the single precision to the pseudo extended p
 
 ## TOOLS
 
-The installation scripts of necessary tools are located in directory **tools**. These scripts need **root** permission in order to install packages and tools for simulation and testcase generation. Please run these scripts in directory **tools** locally.
+The installation scripts of necessary tools are located in directory **tools**. These scripts need **root** permission in order to install packages and tools for simulation and testcase generation.
+
+```console
+make tool
+```
 
 ## GENERATE
 

@@ -8,7 +8,8 @@ module fp_fdiv #(
     input fp_fdiv_in_type fp_fdiv_i,
     output fp_fdiv_out_type fp_fdiv_o,
     input fp_mac_out_type fp_mac_o,
-    output fp_mac_in_type fp_mac_i
+    output fp_mac_in_type fp_mac_i,
+    input clear
 );
   timeunit 1ns; timeprecision 1ps;
 
@@ -564,6 +565,10 @@ module fp_fdiv #(
 
         end
 
+        if (clear == 1) begin
+          v.ready = 0;
+        end
+
         fp_fdiv_o.fp_rnd.sig = v.sign_rnd;
         fp_fdiv_o.fp_rnd.expo = v.exponent_rnd;
         fp_fdiv_o.fp_rnd.mant = v.mantissa_rnd;
@@ -741,6 +746,10 @@ module fp_fdiv #(
           v_fix.mantissa_rnd = {1'h0, v_fix.mantissa_fdiv[77:54]};
           v_fix.grs = {v_fix.mantissa_fdiv[53:52], |(v_fix.mantissa_fdiv[51:0])};
 
+        end
+
+        if (clear == 1) begin
+          v_fix.ready = 0;
         end
 
         fp_fdiv_o.fp_rnd.sig = v_fix.sign_rnd;

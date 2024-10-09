@@ -65,7 +65,8 @@ package fp_lib is
 			fp_fma_i : in  fp_fma_in_type;
 			fp_fma_o : out fp_fma_out_type;
 			lzc_o    : in  lzc_128_out_type;
-			lzc_i    : out lzc_128_in_type
+			lzc_i    : out lzc_128_in_type;
+			clear    : in  std_logic
 		);
 	end component;
 
@@ -83,7 +84,8 @@ package fp_lib is
 			fp_fdiv_i : in  fp_fdiv_in_type;
 			fp_fdiv_o : out fp_fdiv_out_type;
 			fp_mac_i  : out fp_mac_in_type;
-			fp_mac_o  : in  fp_mac_out_type
+			fp_mac_o  : in  fp_mac_out_type;
+			clear     : in  std_logic
 		);
 	end component;
 
@@ -114,7 +116,8 @@ package fp_lib is
 			fp_fdiv_o    : in  fp_fdiv_out_type;
 			fp_fdiv_i    : out fp_fdiv_in_type;
 			fp_rnd_o     : in  fp_rnd_out_type;
-			fp_rnd_i     : out fp_rnd_in_type
+			fp_rnd_i     : out fp_rnd_in_type;
+			clear        : in  std_logic
 		);
 	end component;
 

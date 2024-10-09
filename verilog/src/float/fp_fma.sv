@@ -7,7 +7,8 @@ module fp_fma (
     input fp_fma_in_type fp_fma_i,
     output fp_fma_out_type fp_fma_o,
     input lzc_128_out_type lzc_o,
-    output lzc_128_in_type lzc_i
+    output lzc_128_in_type lzc_i,
+    input clear
 );
   timeunit 1ns; timeprecision 1ps;
 
@@ -124,6 +125,10 @@ module fp_fma (
       v_1.mantissa_mul = v_1.mantissa_l;
     end
 
+    if (clear == 1) begin
+      v_1.ready = 0;
+    end
+
     rin_1.fmt = v_1.fmt;
     rin_1.rm = v_1.rm;
     rin_1.snan = v_1.snan;
@@ -208,6 +213,10 @@ module fp_fma (
 
     v_2.mantissa_rnd = {1'h0, v_2.mantissa_mac[75:52]};
     v_2.grs = {v_2.mantissa_mac[51:50], |v_2.mantissa_mac[49:0]};
+
+    if (clear == 1) begin
+      v_2.ready = 0;
+    end
 
     rin_2.sign_rnd = v_2.sign_rnd;
     rin_2.exponent_rnd = v_2.exponent_rnd;

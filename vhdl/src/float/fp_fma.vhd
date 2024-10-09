@@ -15,7 +15,8 @@ entity fp_fma is
 		fp_fma_i : in  fp_fma_in_type;
 		fp_fma_o : out fp_fma_out_type;
 		lzc_o    : in  lzc_128_out_type;
-		lzc_i    : out lzc_128_in_type
+		lzc_i    : out lzc_128_in_type;
+		clear    : in  std_logic
 	);
 end fp_fma;
 
@@ -164,6 +165,10 @@ begin
 			mantissa_mul := mantissa_l;
 		end if;
 
+		if clear = '1' then
+			ready := '0';
+		end if;
+
 		rin_1.fmt <= fmt;
 		rin_1.rm <= rm;
 		rin_1.snan <= snan;
@@ -286,6 +291,10 @@ begin
 
 		mantissa_rnd := "0" & mantissa_mac(75 downto 52);
 		grs := mantissa_mac(51 downto 50) & or_reduce(mantissa_mac(49 downto 0));
+
+		if clear = '1' then
+			ready := '0';
+		end if;
 
 		rin_2.sign_rnd <= sign_rnd;
 		rin_2.exponent_rnd <= exponent_rnd;
