@@ -28,7 +28,7 @@ This floating point unit transform the single precision to the pseudo extended p
 
 ## UNIT
 
-![fp_unit](image/fpu.png)
+![fp_unit](image/fpu.svg)
 
 ### SIGNALS
 
