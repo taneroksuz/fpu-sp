@@ -52,9 +52,9 @@ This floating point unit transform the single precision to the pseudo extended p
 
 | op | rm | type |
 |:---|:---|:-----|
-| fcmp | "000" | EQ |
+| fcmp | "000" | LE |
 | fcmp | "001" | LT |
-| fcmp | "010" | LE |
+| fcmp | "010" | EQ |
 
 | op | rm | type |
 |:---|:---|:-----|
